@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ArbitraryProgressBar.Horizontal" parent="android:Widget.Material.ProgressBar.Horizontal"/>
+
+    <style name="ArbitraryProgressBar.Vertical" parent="android:Widget.Material.ProgressBar.Horizontal">
+        <item name="orientation">vertical</item>
+        <item name="android:maxWidth">16dp</item>
+        <item name="android:minWidth">16dp</item>
+    </style>
+</resources>
