@@ -1,6 +1,7 @@
 package com.tuanna.arbitrarybar;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -8,8 +9,10 @@ import android.widget.SeekBar;
 
 public class ArbitrarySeekBar extends SeekBar {
 
-    private int mLastProgress = 0;
+    private static final int HORIZONTAL_VALUE = 0;
 
+    private boolean mIsHorizontal;
+    private int mLastProgress;
     private OnSeekBarChangeListener mOnChangeListener;
 
     public ArbitrarySeekBar(Context context) {
@@ -18,28 +21,54 @@ public class ArbitrarySeekBar extends SeekBar {
 
     public ArbitrarySeekBar(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init(attrs, 0);
     }
 
     public ArbitrarySeekBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init(attrs, defStyle);
+    }
+
+    private void init(AttributeSet attrs, int defStyle) {
+        TypedArray array = getContext().getTheme().obtainStyledAttributes(
+                attrs, R.styleable.ArbitrarySeekBar, defStyle, 0
+        );
+        int orientationValue = array.getInt(
+                R.styleable.ArbitrarySeekBar_orientation, HORIZONTAL_VALUE
+        );
+        mIsHorizontal = orientationValue == HORIZONTAL_VALUE;
+
+        array.recycle();
     }
 
     @Override
     protected void onDraw(Canvas c) {
-        c.rotate(-90);
-        c.translate(-getHeight(), 0);
+        if (!mIsHorizontal) {
+            c.rotate(-90);
+            c.translate(-getHeight(), 0);
+        }
         super.onDraw(c);
     }
 
+    @SuppressWarnings("SuspiciousNameCombination")
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(heightMeasureSpec, widthMeasureSpec);
-        setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
+        if (mIsHorizontal) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        } else {
+            super.onMeasure(heightMeasureSpec, widthMeasureSpec);
+            setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
+        }
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(h, w, oldh, oldw);
+    protected void onSizeChanged(int w, int h, int oldW, int oldH) {
+        if (mIsHorizontal) {
+            super.onSizeChanged(w, h, oldW, oldH);
+        } else {
+            // Swap dimensions
+            super.onSizeChanged(h, w, oldH, oldW);
+        }
     }
 
     @Override
@@ -48,9 +77,13 @@ public class ArbitrarySeekBar extends SeekBar {
             return false;
         }
 
+        if (mIsHorizontal) {
+            return super.onTouchEvent(event);
+        }
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if(mOnChangeListener !=null){
+                if (mOnChangeListener != null) {
                     mOnChangeListener.onStartTrackingTouch(this);
                 }
                 setPressed(true);
@@ -71,7 +104,7 @@ public class ArbitrarySeekBar extends SeekBar {
                 if (progress != mLastProgress) {
                     // Only enact listener if the progress has actually changed
                     mLastProgress = progress;
-                    if(mOnChangeListener != null){
+                    if (mOnChangeListener != null) {
                         mOnChangeListener.onProgressChanged(this, progress, true);
                     }
                 }
@@ -81,7 +114,7 @@ public class ArbitrarySeekBar extends SeekBar {
                 setSelected(true);
                 break;
             case MotionEvent.ACTION_UP:
-                if(mOnChangeListener != null){
+                if (mOnChangeListener != null) {
                     mOnChangeListener.onStopTrackingTouch(this);
                 }
                 setPressed(false);
@@ -98,17 +131,6 @@ public class ArbitrarySeekBar extends SeekBar {
 
     @Override
     public void setOnSeekBarChangeListener(OnSeekBarChangeListener onChangeListener) {
-        this.mOnChangeListener = onChangeListener;
-    }
-
-    public synchronized void setProgressAndThumb(int progress) {
-        setProgress(progress);
-        onSizeChanged(getWidth(), getHeight(), 0, 0);
-        if (progress != mLastProgress) {
-            mLastProgress = progress;
-            if(mOnChangeListener != null){
-                mOnChangeListener.onProgressChanged(this, progress, true);
-            }
-        }
+        mOnChangeListener = onChangeListener;
     }
 }
